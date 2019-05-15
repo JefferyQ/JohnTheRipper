@@ -17,6 +17,40 @@
 #ifndef _JOHN_LOGGER_H
 #define _JOHN_LOGGER_H
 
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE /* for LOCK_EX */
+#endif
+
+#if !(__MINGW32__ || _MSC_VER)
+
+#include <fcntl.h>
+/*
+ * File locking helper. Always use the macro!
+ * Return 0 on success, -1 on failure
+ */
+#define jtr_lock(fd, cmd, type, name)	  \
+	log_lock(fd, cmd, type, name, __FUNCTION__, __FILE__, __LINE__)
+
+extern int log_lock(int fd, int cmd, int type, const char *name,
+                    const char *function, const char *file, int line);
+
+#else
+
+/*
+ * Surely someone should be able to write a trivial emulator for fcntl
+ * locks, no?!  This is 2019, I simply can't believe there is none.
+ * However, *I* am not going to find it.
+ */
+#define jtr_lock(...)
+
+#define F_SETLK
+#define F_SETLKW
+#define F_UNLCK
+#define F_RDLCK
+#define F_WRLCK
+
+#endif /* !(__MINGW32__ || _MSC_VER) */
+
 /*
  * Initializes the logger (opens john.pot and a log file).
  */
